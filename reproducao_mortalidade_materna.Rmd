@@ -7,6 +7,8 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+library(magrittr)
 ```
 
 ## Resumo do artigo
@@ -63,13 +65,61 @@ knitr::opts_chunk$set(echo = TRUE)
 
 * mortalidade geral, mortalidade feminina, mortalidade entre mulheres de 10-49 anos e mortalidade materna
 
+### Coletando dados
+
+
+  + Faixa etária
+  + Local de ocorrência
+  + Tipo de causa obstétrica
+  + Grupos CID-10
+  + Categorias CID-10
+  + Escolaridade
+  + Cor e Raça
+  + Estado civil
+  + Unidades de Federação
+  + Regiões de Saúde (CIR)
+  
 ```{r}
-library(microdatasus)
+#library(basedosdados)
 
-dados_nao_processados <- fetch_datasus(year_start = 1996, year_end = 2018, information_system = "SIM-DO")
+set_billing_id("ic-pipae-usp")
 
-dados <- process_sim(dados_nao_processados)
+query <- "
+SELECT tipo_obito, causa_basica, data_obito, naturalidade, data_nascimento, idade, sexo, raca_cor, estado_civil, escolaridade, ocupacao, local_ocorrencia, idade_mae, escolaridade_mae, ocupacao_mae, sigla_uf, ano, gravidez, gestacao, parto, obito_parto, morte_parto, obito_gravidez, obito_puerperio, assistencia_medica, circunstancia_obito, causa_basica_original, causa_basica_pre, tipo_obito_ocorrencia, tipo_morte_ocorrencia, causa_materna, serie_escolar_mae, linha_a, linha_b, linha_c, linha_d, linha_ii
+  
+FROM `basedosdados.br_ms_sim.microdados`
+
+WHERE naturalidade = '800' AND sexo = '2'
+"
+
+dados <- basedosdados::read_sql(query, page_size = 10000)
+
+# dados <- readr::read_csv("dados/sim_domat_basedosdados.csv")
 ```
+
+### Preprocessamentos
+
+```{r dataprep}
+library(dplyr)
+library(stringr)
+
+dados %>% 
+  select(-naturalidade, -sexo) %>% 
+  filter(
+    str_starts(causa_basica, "A34|B20|B21|B22|B23|B24|D39|E23|F53|M83|O"),
+    !str_detect(causa_basica, "O96|O97")) %>% 
+  View()
+  
+
+# preciso <- c(O00, O99, exceto O96 e O97
+#   + A34
+#   + B20-B24
+#   + D39
+#   + E23
+#   + F53
+#   + M83)
+```
+
 
 
 
