@@ -64,6 +64,42 @@ knitr::opts_chunk$set(echo = TRUE)
 * mortalidade geral, mortalidade feminina, mortalidade entre mulheres de 10-49 anos e mortalidade materna
 
 ```{r}
+library(microdatasus)
 
+dados_nao_processados <- fetch_datasus(year_start = 1996, year_end = 2018, information_system = "SIM-DO")
+
+dados <- process_sim(dados_nao_processados)
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
