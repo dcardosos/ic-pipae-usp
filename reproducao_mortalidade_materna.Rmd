@@ -1,0 +1,69 @@
+---
+title: "Reprodução do estudo sobre mortalidade materna"
+author: "Douglas Cardoso"
+date: "2/21/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Resumo do artigo
+
+* análise bibliográfica sobre a mortalidade materna no bRASIL
+* pesquisa no SIM, Sistema de Informação sobre Mortalidade
+* redução da mortalidade materna é um desafio e faz parte dos Objetivos de Desenvolvimento Sustentável (ODS): até 2030, reduzir a taxa de mortalidade materna para menos de 70 mortes por 100.000 nascidos vivos. No Brasil, essa meta ficou para o máximo de 30 mortes por 100 mil nascidos vivos.
+* em 2018, das 450 CIR (Regiões de Sáude), 79,1%  registraram mortes por causas maternas. 69,5% apresentaram 30 mortes por 100 mil nascidos vivos, e 35,3% possuem razão superior a 70 mortes por 100 mil nascidos vivos.
+* o motivo de terem escolhido o período de 1996 até 2018, é porque abrange todo o período em que o SIM codifica suas informações a partir das CID-10
+* os códigos escolhidos para caracterizar a mortalidade materna foram:
+  
+  + O00-O99, exceto O96 e O97
+  + A34
+  + B20-B24
+  + D39
+  + E23
+  + F53
+  + M83
+
+* também foram utilizados busca por termos, como "morte grav/puerp", em categorias "durante a gravidez, parto ou aborto" e "Durante o puerpério, até 42 dias".
+
+* há uma falta de confirmação das mortes maternas na Declaração de Óbito, no Brasil. Isso faz com que parte delas sejam classificadas em outras rubricas das CID-10, gerando uma subnumeração
+
+* variáveis utilizadas:
+
+  + Faixa etária
+  + Local de ocorrência
+  + Tipo de causa obstétrica
+  + Grupos CID-10
+  + Categorias CID-10
+  + Escolaridade
+  + Cor e Raça
+  + Estado civil
+  + Unidades de Federação
+  + Regiões de Saúde (CIR)
+
+* o que é morte materna? óbito de uma mulher durante a gestação ou depois de 42 dias após seu término, devido a qualquer causa relacionada ou agravada pela gravidez ou medidas relacionadas a ela
+* a partir de 1996 foram introduzidas variáveis de preenchimento obrigatório na declaração de óbito relacionadsa à presença de gravidez no momento da morte
+* houve decrescimento na razão de mortalidade materna entre 1990 e 2001, mas estagnou-se nos anos 2000 devido a:
+
+   +  ilegalidade do aborto
+   + probelas na qualidade da atenção a gestão, parto e nascimento, com desigualdades regionais
+   + peregrinação das gestantes entre maternidades e serviços
+   + epidemia de cesariana e prematuridade
+
+* assistência pré-natal é uma intervenção benéfica na prevenção e tratamento de problemas envolvendo a gestação
+* a mortalidade materna é evitável em mais de 90,0% dos casos
+* há uma predominância de óbitos maternos por causas diretas, como distúrbios hemorrágicos, síndromes hipertensivas e as infecções pós-parto
+* a eclâmpsia é a forma mais grave dos distúrbios hipertensivos, responsável por ~ 50 mil mortes globais/ano.
+* baixa escolaridade materna também é considerada um fator de risco associado à gravidez
+* raça também é fator de risco, mulheres pretas tiveram RMM sete vezes maior do que mulheres brancas ou pardas nas capitais brasileiras, em 2001
+
+## Reproduzindo os gráficos
+
+* mortalidade geral, mortalidade feminina, mortalidade entre mulheres de 10-49 anos e mortalidade materna
+
+```{r}
+
+```
+
