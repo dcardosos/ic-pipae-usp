@@ -67,7 +67,7 @@ library(magrittr)
 
 ### Coletando dados
   
-```{r}
+```{r echo=FALSE, eval = FALSE}
 #library(basedosdados)
 
 set_billing_id("ic-pipae-usp")
@@ -89,7 +89,7 @@ dados_sinasc <- basedosdados::read_sql(query_sinasc)
 
 ### Preprocessamentos
 
-```{r dataprep}
+```{r dataprep, echo=FALSE, eval = FALSE}
 library(dplyr)
 library(stringr)
 
@@ -107,7 +107,7 @@ mortalidade_materna <- dados_sim %>%
 
 ### Razao Mortalidade Materna
 
-```{r}
+```{r echo=FALSE, eval = FALSE}
 mortalidade_materna %>% 
   group_by(ano) %>% 
   summarise(rmm = (n() / nascidos_vivos) * 100000) %>% 
