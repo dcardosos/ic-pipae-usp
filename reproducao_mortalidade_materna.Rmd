@@ -9,6 +9,10 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 
 library(magrittr)
+library(dplyr)
+library(basedosdados)
+library(ggplot2)
+library(tidyr)
 ```
 
 ## Resumo do artigo
@@ -68,50 +72,89 @@ library(magrittr)
 ### Coletando dados
   
 ```{r echo=FALSE, eval = FALSE}
-#library(basedosdados)
-
 set_billing_id("ic-pipae-usp")
 
-query_sim <- "
-SELECT tipo_obito, causa_basica, data_obito, naturalidade, data_nascimento, idade, sexo, raca_cor, estado_civil, escolaridade, ocupacao, local_ocorrencia, idade_mae, escolaridade_mae, ocupacao_mae, sigla_uf, ano, gravidez, gestacao, parto, obito_parto, morte_parto, obito_gravidez, obito_puerperio, assistencia_medica, circunstancia_obito, causa_basica_original, causa_basica_pre, tipo_obito_ocorrencia, tipo_morte_ocorrencia, causa_materna, serie_escolar_mae, linha_a, linha_b, linha_c, linha_d, linha_ii
-  
-FROM `basedosdados.br_ms_sim.microdados`
+query <- "
+WITH 
+obitos_femininos AS (
+  SELECT ano, count(*) qtd_obitos
+  FROM `basedosdados.br_ms_sim.microdados`
+  WHERE sexo = '2'
+  GROUP BY ano),
 
-WHERE naturalidade = '800' AND sexo = '2'
+obitos_gerais AS (
+  SELECT ano, count(*) qtd_obitos
+  FROM `basedosdados.br_ms_sim.microdados`
+  GROUP BY ano  
+),
+
+obitos_femininos_10_a_49_anos AS (
+  SELECT ano, count(*) qtd_obitos
+  FROM `basedosdados.br_ms_sim.microdados`
+  WHERE sexo = '2' AND (idade >= 10 AND idade <= 49)
+  GROUP BY ano  
+)
+
+SELECT t1.ano, t2.populacao as populacao_geral, t1.qtd_obitos as qtd_obitos_femininos, t3.qtd_obitos as qtd_obitos_gerais, t4.qtd_obitos as qtd_obitos_femininos_10_a_49_anos
+FROM obitos_femininos t1
+LEFT JOIN obitos_gerais t3
+ON t1.ano = t3.ano
+LEFT JOIN `basedosdados.br_ibge_populacao.brasil` t2
+ON t1.ano = t2.ano
+LEFT JOIN obitos_femininos_10_a_49_anos t4
+ON t1.ano = t4.ano
+ORDER BY ano
 "
 
-query_sinasc <- "SELECT ano, count(*) as contagem FROM `basedosdados.br_ms_sinasc.microdados` GROUP BY ano"
-
-dados_sim <- basedosdados::read_sql(query_sim, page_size = 10000)
-dados_sinasc <- basedosdados::read_sql(query_sinasc)
-# dados <- readr::read_csv("dados/sim_domat_basedosdados.csv")
+#dados_sim <- basedosdados::read_sql(query)
+dados_sim <- readr::read_csv("dados/basedosdados_mssim_ibgepop.csv")
 ```
 
-### Preprocessamentos
-
-```{r dataprep, echo=FALSE, eval = FALSE}
-library(dplyr)
-library(stringr)
-
-mortalidade_materna <- dados_sim %>% 
-  select(-naturalidade, -sexo) %>% 
-  mutate(ano = as.integer(ano)) %>% 
-  left_join(dados_sinasc %>% 
-              rename(nascidos_vivos = contagem) %>%
-              mutate(ano = as.integer(ano))
-              , by = "ano") %>% 
-  filter(
-    str_starts(causa_basica, "A34|B20|B21|B22|B23|B24|D39|E23|F53|M83|O"),
-    !str_detect(causa_basica, "O96|O97"))  
+```{r}
+readr::read_csv2("dados/populacao_feminina_1996_2019.csv",
+                 col_names = c("ano", "populacao_feminina"),
+                 col_types = list(readr::col_integer(), readr::col_integer())) |> 
+  left_join(readr::read_csv2("dados/populacao_feminina_10_a_49_anos_1996_2019.csv",
+                             col_names = c("ano", "populacao_feminina_10_a_49_anos"),
+                             col_types = list(readr::col_integer(), readr::col_integer()))) |> 
+  slice(-1) -> pop_feminina
 ```
 
-### Razao Mortalidade Materna
+### Joins
+
+```{r join, echo=FALSE, eval = FALSE}
+
+dados <- dados_sim |> 
+  mutate(across(
+    everything(),
+    as.integer)) |>
+  left_join(pop_feminina)
+  
+```
+
+### Calculos das taxas de mortalidade
 
 ```{r echo=FALSE, eval = FALSE}
-mortalidade_materna %>% 
-  group_by(ano) %>% 
-  summarise(rmm = (n() / nascidos_vivos) * 100000) %>% 
-  distinct(ano, .keep_all = TRUE)
+taxas <- dados %>% 
+  mutate(
+    mortalidade_geral = (qtd_obitos_gerais * 100000) / populacao_geral,
+    mortalidade_feminina = (qtd_obitos_femininos * 100000) / populacao_feminina,
+    mortalidade_feminina_10_a_49_anos = (qtd_obitos_femininos_10_a_49_anos * 100000) / populacao_feminina_10_a_49_anos) |> 
+  select(ano, mortalidade_geral, mortalidade_feminina, mortalidade_feminina_10_a_49_anos)
+```
+
+
+```{r}
+# preparo para o grafico
+taxas |> 
+  pivot_longer(
+    cols = mortalidade_geral:mortalidade_feminina_10_a_49_anos,
+    names_to = "mortalidade",
+    values_to = "quantidade"
+  ) |> 
+  ggplot(aes(x = ano, y = quantidade, color = mortalidade)) +
+  geom_line() +
+  theme_bw()
 ```
 
 
@@ -125,8 +168,10 @@ mortalidade_materna %>%
 
 
 
+```{r}
+590 * 100000 / 2857800
 
-
+```
 
 
 
