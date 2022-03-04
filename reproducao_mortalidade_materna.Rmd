@@ -12,6 +12,7 @@ library(magrittr)
 library(dplyr)
 library(basedosdados)
 library(ggplot2)
+library(ggrepel)
 library(tidyr)
 ```
 
@@ -106,18 +107,32 @@ ON t1.ano = t4.ano
 ORDER BY ano
 "
 
-#dados_sim <- basedosdados::read_sql(query)
-dados_sim <- readr::read_csv("dados/basedosdados_mssim_ibgepop.csv")
+dados_sim <- basedosdados::read_sql(query)
+#dados_sim <- readr::read_csv("dados/basedosdados_mssim_ibgepop.csv")
 ```
 
 ```{r}
-readr::read_csv2("dados/populacao_feminina_1996_2019.csv",
-                 col_names = c("ano", "populacao_feminina"),
-                 col_types = list(readr::col_integer(), readr::col_integer())) |> 
-  left_join(readr::read_csv2("dados/populacao_feminina_10_a_49_anos_1996_2019.csv",
-                             col_names = c("ano", "populacao_feminina_10_a_49_anos"),
-                             col_types = list(readr::col_integer(), readr::col_integer()))) |> 
-  slice(-1) -> pop_feminina
+tabnet <- readr::read_csv2(
+  "dados/populacao_feminina_1996_2019.csv",
+  col_names = c("ano", "populacao_feminina"),
+  col_types = list(readr::col_integer(), readr::col_integer())) |>
+  
+  left_join(
+    readr::read_csv2("dados/populacao_feminina_10_a_49_anos_1996_2019.csv",
+    col_names = c("ano", "populacao_feminina_10_a_49_anos"),
+    col_types = list(readr::col_integer(), readr::col_integer()))) |>
+  
+  left_join(
+    readr::read_csv2("dados/obitos_maternos_1996_2019.csv",
+    col_names = c("ano", "obitos_maternos"),
+    col_types = list(readr::col_integer(), readr::col_integer()))) |> 
+  
+  left_join(
+    readr::read_csv2("dados/nascidos_vivos_1996_2019.csv",
+    col_names = c("ano", "nascidos_vivos"),
+    col_types = list(readr::col_integer(), readr::col_integer()))) |> 
+  
+  filter(!is.na(ano))
 ```
 
 ### Joins
@@ -128,8 +143,9 @@ dados <- dados_sim |>
   mutate(across(
     everything(),
     as.integer)) |>
-  left_join(pop_feminina)
-  
+  left_join(tabnet)
+
+dados
 ```
 
 ### Calculos das taxas de mortalidade
@@ -139,8 +155,9 @@ taxas <- dados %>%
   mutate(
     mortalidade_geral = (qtd_obitos_gerais * 100000) / populacao_geral,
     mortalidade_feminina = (qtd_obitos_femininos * 100000) / populacao_feminina,
-    mortalidade_feminina_10_a_49_anos = (qtd_obitos_femininos_10_a_49_anos * 100000) / populacao_feminina_10_a_49_anos) |> 
-  select(ano, mortalidade_geral, mortalidade_feminina, mortalidade_feminina_10_a_49_anos)
+    mortalidade_feminina_10_a_49_anos = (qtd_obitos_femininos_10_a_49_anos * 100000) / populacao_feminina_10_a_49_anos,
+    mortalidade_materna = (obitos_maternos * 100000) / nascidos_vivos) |> 
+  select(ano, mortalidade_geral, mortalidade_feminina, mortalidade_feminina_10_a_49_anos, mortalidade_materna)
 ```
 
 
@@ -148,44 +165,37 @@ taxas <- dados %>%
 # preparo para o grafico
 taxas |> 
   pivot_longer(
-    cols = mortalidade_geral:mortalidade_feminina_10_a_49_anos,
+    cols = mortalidade_geral:mortalidade_materna,
     names_to = "mortalidade",
     values_to = "quantidade"
   ) |> 
-  ggplot(aes(x = ano, y = quantidade, color = mortalidade)) +
+  mutate(ano =lubridate::ymd(ano, truncated = 2L)) |> 
+  ggplot(aes(x = ano, y = quantidade, color = mortalidade, shape = mortalidade)) +
   geom_line() +
-  theme_bw()
+  geom_point() +
+  ylim(0, 650) +
+  scale_color_grey() +
+  scale_x_date(date_labels = "%Y", breaks = date_breaks("1 year")) +
+  scale_colour_discrete(labels = c("Mortalidade feminina/100.000 hab.",
+                                 "Mortalidade entre mulheres de 10-49 anos/100.000 hab.",
+                                 "Mortalidade geral/100.000 hab.",
+                                 "Mortalidade materna/100.000 nascidos vivos")) +
+  scale_shape_discrete(labels = c("Mortalidade feminina/100.000 hab.",
+                                 "Mortalidade entre mulheres de 10-49 anos/100.000 hab.",
+                                 "Mortalidade geral/100.000 hab.",
+                                 "Mortalidade materna/100.000 nascidos vivos")) +
+  theme(
+    panel.background = element_rect(fill = "white", colour = "grey"),
+    panel.grid.minor.x = element_line("grey"),
+    panel.grid.major.x = element_blank(),
+    legend.title = element_blank(),
+    legend.position = "bottom",
+    axis.text.x = element_text(angle = 60, vjust = 0.5)) +
+  labs(
+    x = NULL,
+    y = NULL
+  )
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-```{r}
-590 * 100000 / 2857800
-
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
