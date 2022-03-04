@@ -169,13 +169,14 @@ taxas |>
     names_to = "mortalidade",
     values_to = "quantidade"
   ) |> 
-  mutate(ano =lubridate::ymd(ano, truncated = 2L)) |> 
-  ggplot(aes(x = ano, y = quantidade, color = mortalidade, shape = mortalidade)) +
+  mutate(ano = lubridate::ymd(ano, truncated = 2L),
+         quantidade = round(quantidade, 2)) |> 
+  ggplot(aes(x = ano, y = quantidade, color = mortalidade, shape = mortalidade, label = quantidade)) +
   geom_line() +
   geom_point() +
   ylim(0, 650) +
-  scale_color_grey() +
-  scale_x_date(date_labels = "%Y", breaks = date_breaks("1 year")) +
+  scale_x_date(date_labels = "%Y", date_breaks = "1 year") +
+  scale_y_continuous(breaks = seq(0, 700, by = 100), limits = c(0, 700)) +
   scale_colour_discrete(labels = c("Mortalidade feminina/100.000 hab.",
                                  "Mortalidade entre mulheres de 10-49 anos/100.000 hab.",
                                  "Mortalidade geral/100.000 hab.",
@@ -186,11 +187,17 @@ taxas |>
                                  "Mortalidade materna/100.000 nascidos vivos")) +
   theme(
     panel.background = element_rect(fill = "white", colour = "grey"),
-    panel.grid.minor.x = element_line("grey"),
+    panel.grid.minor.x = element_line("grey", linetype = "solid"),
     panel.grid.major.x = element_blank(),
     legend.title = element_blank(),
     legend.position = "bottom",
+    legend.key=element_blank(),
     axis.text.x = element_text(angle = 60, vjust = 0.5)) +
+    guides(
+      shape = guide_legend(nrow = 2), 
+      colour = guide_legend(nrow = 2),
+      ) + 
+  geom_text_repel(size = 2) + 
   labs(
     x = NULL,
     y = NULL
