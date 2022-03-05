@@ -18,7 +18,7 @@ library(tidyr)
 
 ## Resumo do artigo
 
-* análise bibliográfica sobre a mortalidade materna no bRASIL
+* análise bibliográfica sobre a mortalidade materna no Brasil
 * pesquisa no SIM, Sistema de Informação sobre Mortalidade
 * redução da mortalidade materna é um desafio e faz parte dos Objetivos de Desenvolvimento Sustentável (ODS): até 2030, reduzir a taxa de mortalidade materna para menos de 70 mortes por 100.000 nascidos vivos. No Brasil, essa meta ficou para o máximo de 30 mortes por 100 mil nascidos vivos.
 * em 2018, das 450 CIR (Regiões de Sáude), 79,1%  registraram mortes por causas maternas. 69,5% apresentaram 30 mortes por 100 mil nascidos vivos, e 35,3% possuem razão superior a 70 mortes por 100 mil nascidos vivos.
@@ -71,6 +71,8 @@ library(tidyr)
 * mortalidade geral, mortalidade feminina, mortalidade entre mulheres de 10-49 anos e mortalidade materna
 
 ### Coletando dados
+
+Dados coletados do Base dos Dados e  
   
 ```{r echo=FALSE, eval = FALSE}
 set_billing_id("ic-pipae-usp")
@@ -160,7 +162,7 @@ taxas <- dados %>%
   select(ano, mortalidade_geral, mortalidade_feminina, mortalidade_feminina_10_a_49_anos, mortalidade_materna)
 ```
 
-
+### Gráfico 1
 ```{r}
 # preparo para o grafico
 taxas |> 
@@ -175,7 +177,7 @@ taxas |>
   geom_line() +
   geom_point() +
   ylim(0, 650) +
-  scale_x_date(date_labels = "%Y", date_breaks = "1 year") +
+  scale_x_date(date_labels = "%Y", date_breaks = "1 year", expand = expansion(mult = 0.01)) +
   scale_y_continuous(breaks = seq(0, 700, by = 100), limits = c(0, 700)) +
   scale_colour_discrete(labels = c("Mortalidade feminina/100.000 hab.",
                                  "Mortalidade entre mulheres de 10-49 anos/100.000 hab.",
@@ -197,14 +199,19 @@ taxas |>
       shape = guide_legend(nrow = 2), 
       colour = guide_legend(nrow = 2),
       ) + 
-  geom_text_repel(size = 2) + 
+  geom_text_repel(size = 4) + 
   labs(
+    title = "Brasil – taxas de mortalidade geral, mortalidade feminina, mortalidade entre mulheres de 10 a 49 anos e razão de mortalidade materna, 1996 a 2018.",
     x = NULL,
     y = NULL
   )
 ```
 
+# Gráfico 2
 
+```{r}
+readr::read_csv2("dados/obitos_maternos_10_a_49_anos.csv")
+```
 
 
 
