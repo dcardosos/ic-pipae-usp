@@ -109,8 +109,8 @@ ON t1.ano = t4.ano
 ORDER BY ano
 "
 
-dados_sim <- basedosdados::read_sql(query)
-#dados_sim <- readr::read_csv("dados/basedosdados_mssim_ibgepop.csv")
+#dados_sim <- basedosdados::read_sql(query)
+dados_sim <- readr::read_csv("dados/basedosdados_mssim_ibgepop.csv")
 ```
 
 ```{r}
