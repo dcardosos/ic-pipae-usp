@@ -1,0 +1,50 @@
+---
+title: "Exploratória - IPEA"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+
+df <- readr::read_csv('ocorrencias_2021.csv')
+```
+
+## Dados
+
+
+## Caracterização dos acidentes de trânsito nas rodovias federais em 2021
+
+Em 2021 ocorreram 64.515 acidentes nas estradas federais fiscalizadas pela PRF, sendo  que 5.395 pessoas perderam a vida e 71.780 ficaram feridos. Pouco mais de um quarto dos feridos teve lesões graves. Nesse ano, cerca de 7% dos acidentes apresentaram vítimas  fatais; 74%, vítimas feridas; e 18% foram acidentes sem vítimas. Aproximadamente 72% dos acidentes com vítimas fatais ocorreram em zonas rurais, e 23% das mortes foram causadas por excesso de velocidade ou ultrapassagem indevida.
+
+```{r caracteristicas por classificacao}
+df |> 
+  group_by(classificacao_acidente) |> 
+  summarise(
+    Acidentes = n(),
+    `Veículos envolvidos` = sum(veiculos),
+    Ilesos = sum(ilesos),
+    Feridos = sum(feridos),
+    Mortos = sum(mortos)) |> 
+  rename(Categoria = classificacao_acidente) |> 
+  janitor::adorn_totals() |> 
+  knitr::kable()
+```
+
+```{r }
+## sim = urbano, nao = rural
+df |> 
+  mutate(uso_solo = case_when(
+    uso_solo == 'Sim' ~ 'Urbano',
+    uso_solo == 'Nao' ~ 'Rural')) |> 
+  group_by(classificacao_acidente, uso_solo) |> 
+  summarise(
+    Acidentes = n(),
+    `Veículos envolvidos` = sum(veiculos),
+    Ilesos = sum(ilesos),
+    Feridos = sum(feridos),
+    Mortos = sum(mortos)) |> 
+  rename(Categoria = classificacao_acidente) |> 
+  janitor::adorn_totals() |> 
+  knitr::kable()
+```
