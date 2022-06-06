@@ -1,1 +1,1 @@
-# ic-pipae-usp
+# Repositório para códigos da Iniciação Científica
