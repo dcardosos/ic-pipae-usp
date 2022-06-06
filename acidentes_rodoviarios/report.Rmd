@@ -6,45 +6,130 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(dplyr)
-
+library(ggplot2)
 df <- readr::read_csv('ocorrencias_2021.csv')
 ```
+
+https://www.ipea.gov.br/portal/images/stories/PDFs/relatoriopesquisa/150922_relatorio_acidentes_transito.pdf
 
 ## Dados
 
 
 ## Caracterização dos acidentes de trânsito nas rodovias federais em 2021
 
-Em 2021 ocorreram 64.515 acidentes nas estradas federais fiscalizadas pela PRF, sendo  que 5.395 pessoas perderam a vida e 71.780 ficaram feridos. Pouco mais de um quarto dos feridos teve lesões graves. Nesse ano, cerca de 7% dos acidentes apresentaram vítimas  fatais; 74%, vítimas feridas; e 18% foram acidentes sem vítimas. Aproximadamente 72% dos acidentes com vítimas fatais ocorreram em zonas rurais, e 23% das mortes foram causadas por excesso de velocidade ou ultrapassagem indevida.
+Em 2021 ocorreram 64.515 acidentes nas estradas federais fiscalizadas pela PRF, sendo  que 5.395 pessoas perderam a vida e 71.780 ficaram feridos. Pouco mais de um quarto dos feridos teve lesões graves. Nesse ano, cerca de 7% dos acidentes apresentaram vítimas  fatais; 74%, vítimas feridas; e 18% foram acidentes sem vítimas. Aproximadamente 72% dos acidentes com vítimas fatais ocorreram em zonas rurais, e 24% das mortes foram causadas por excesso de velocidade e transitar na contramão.
 
 ```{r caracteristicas por classificacao}
-df |> 
+tb1 <- df |> 
   group_by(classificacao_acidente) |> 
   summarise(
     Acidentes = n(),
     `Veículos envolvidos` = sum(veiculos),
     Ilesos = sum(ilesos),
     Feridos = sum(feridos),
-    Mortos = sum(mortos)) |> 
+    Mortos = sum(mortos), .groups = "drop") 
+
+tb1 |> 
   rename(Categoria = classificacao_acidente) |> 
   janitor::adorn_totals() |> 
   knitr::kable()
-```
 
-```{r }
+# porcentagens
+tb1 |>  
+  mutate(
+    across(
+      .cols = c(Acidentes, `Veículos envolvidos`, Ilesos, Feridos, Mortos),
+      .fns = ~.x / sum(.x) * 100))
+
+# acidentes  com vitimas fatais rural / urbano
 ## sim = urbano, nao = rural
+
 df |> 
   mutate(uso_solo = case_when(
     uso_solo == 'Sim' ~ 'Urbano',
     uso_solo == 'Nao' ~ 'Rural')) |> 
-  group_by(classificacao_acidente, uso_solo) |> 
+  filter(classificacao_acidente == "Com vitimas fatais") |> 
+  group_by(uso_solo) |> 
+  summarise(Acidentes = n(), .groups = "drop") |> 
+  mutate(Acidentes = Acidentes / sum(Acidentes) * 100)
+
+# causa acidente - mortes
+df |> 
+  group_by(causa_acidente) |> 
+  summarise(Mortos = sum(mortos), .groups = "drop") |> 
+  mutate(Mortos = Mortos / sum(Mortos) * 100) |> 
+  arrange(-Mortos)
+```
+Nesse mesmo ano, ocorreram em média 177 acidentes e houve 14 mortos por dia. Esses acidentes envolveram 106.697 veículos, uma média de 1,65 veículos por ocorrência. O estado de Minas Gerais foi o que apresentou o maior número de acidentes e mortos, enquanto o estado do Amazonas, o menor.
+
+```{r include=FALSE}
+# média de acidentes/mortes e veicuos por ocorrencia
+df |> 
+  summarise(
+    qtd_days = as.integer(max(data) - min(data)),
+    media_acidentes_day = n() / qtd_days,
+    media_mortes_day = sum(mortos) / qtd_days,
+    media_veiculos_ocorr = sum(veiculos) / n())
+
+# estados com maior/menor numero de acidentes e mortos
+df |> 
+  group_by(uf) |> 
+  summarise(qtd_acidentes = n()) |>
+  ggplot(aes(reorder(uf, qtd_acidentes), qtd_acidentes)) +
+  geom_col() +
+  labs(x = "Estado", y = NULL) +
+  coord_flip() 
+```
+
+Considerando a mortalidade por tipo de acidente, verifica-se que a colisão frontal foi responsável por 36,6% das mortes, seguida pelos atropelamentos de pessoas, responsável por 30,9% das mortes. Esses tipos de acidente responderam por 11,2% do total e, embora menos frequentes, foram os mais letais. Nos acidentes do tipo colisão frontal, morreram 36,6 pessoas a cada cem acidentes; e nos do tipo atropelamento de pessoas, 30,8. Chama a atenção também a frequência de colisões traseiras e transversais, que correspondem a 31,5% dos acidentes, que somado ao segundo maior tipo de acidente frequente, saída de leito carrocável, equivalem a quase metade dos acidentes, isto é, uma concentração em tipos de acidentes comuns.	
+
+```{r}
+df |> 
+  group_by(tipo_acidente) |> 
   summarise(
     Acidentes = n(),
-    `Veículos envolvidos` = sum(veiculos),
-    Ilesos = sum(ilesos),
     Feridos = sum(feridos),
-    Mortos = sum(mortos)) |> 
-  rename(Categoria = classificacao_acidente) |> 
-  janitor::adorn_totals() |> 
+    Mortos = sum(mortos),
+    `Acidentes Graves` = sum(feridos_graves),
+    `Mortes/100 acidentes` = Mortos / Acidentes * 100, .groups = "drop") |>
+  mutate(`% Acidentes` = Acidentes / sum(Acidentes) * 100) |> 
+  arrange(-`Mortes/100 acidentes`) |> 
   knitr::kable()
+
+df |> 
+  group_by(tipo_acidente) |> 
+  summarise(
+    Acidentes = n(),
+    Mortos = sum(mortos), .groups = "drop") |>
+  mutate(
+    `% Acidentes` = Acidentes / sum(Acidentes) * 100,
+    `% Mortos` = Mortos / sum(Mortos) * 100) |>
+  slice_max(n = 10, order_by = `% Mortos`) |> 
+  tidyr::pivot_longer(
+    cols = c(`% Acidentes`, `% Mortos`),
+    names_to = "indicador",
+    values_to = "pct") |> 
+  ggplot(aes(reorder(tipo_acidente, pct), pct, fill = indicador)) + 
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_fill_manual("", values = c("#3EAEAE", "#32593A")) +
+  geom_text(
+    aes(reorder(tipo_acidente, pct), label = round(pct, 1), fill = indicador),
+    position = position_dodge(width = 1),
+    hjust = 0.2, size = 3
+  ) + 
+  coord_flip() +
+  theme_minimal() +
+  theme(legend.title = element_blank()) +
+  labs(x = NULL, y = NULL,  title = "Tipo versus gravidade dos acidentes nas rodovias federais (2021)")
 ```
+
+Focando os dois principais tipos de acidente que geram mais óbitos pode-se traçar um perfil dessas ocorrências: 89,71% das colisões frontais ocorreram em pistas simples, ocasionando 93,91% dos mortos nesse tipo de acidente; e 71,73% dos atropelamentos de pessoas ocorreram em trechos urbanos, ocasionando 58,47% dos mortos. O períodode plena noite concentrou 63,12% das mortes por esse tipo de acidente.
+
+```{r}
+df |> 
+  filter(tipo_acidente %in% c("Colisao frontal", "Atropelamento de pedestre")) |> 
+  group_by(tipo_acidente, tipo_pista) |> 
+  summarise(qtd = n()) |> 
+  mutate(pct = qtd / sum(qtd) * 100)
+```
+
