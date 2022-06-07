@@ -123,13 +123,90 @@ df |>
   labs(x = NULL, y = NULL,  title = "Tipo versus gravidade dos acidentes nas rodovias federais (2021)")
 ```
 
-Focando os dois principais tipos de acidente que geram mais óbitos pode-se traçar um perfil dessas ocorrências: 89,71% das colisões frontais ocorreram em pistas simples, ocasionando 93,91% dos mortos nesse tipo de acidente; e 71,73% dos atropelamentos de pessoas ocorreram em trechos urbanos, ocasionando 58,47% dos mortos. O períodode plena noite concentrou 63,12% das mortes por esse tipo de acidente.
+Focando os dois principais tipos de acidente que geram mais óbitos pode-se traçar um perfil dessas ocorrências: 88,88% das colisões frontais ocorreram em pistas simples, ocasionando 93,96% dos mortos nesse tipo de acidente; além disso, 70% das colisões ocorreram em trechos rurais, que ocasionou 86% dos mortos nesse tipo. Em ambos tipos de acidente, mais de 88% das ocorrências e mortes aconteceram nos períodos *plenos* - dia e noite. 
 
 ```{r}
+# tipo pista
 df |> 
   filter(tipo_acidente %in% c("Colisao frontal", "Atropelamento de pedestre")) |> 
   group_by(tipo_acidente, tipo_pista) |> 
-  summarise(qtd = n()) |> 
+  summarise(qtd_acc = n(), qtd_mortos = sum(mortos)) |> 
+  mutate(
+    pct_acc = qtd_acc / sum(qtd_acc) * 100,
+    pct_mortos = qtd_mortos / sum(qtd_mortos) * 100) |>
+  select(tipo_acidente, tipo_pista, starts_with("pct"))
+
+# rural ou urbano
+df |> 
+  filter(tipo_acidente %in% c("Colisao frontal", "Atropelamento de pedestre")) |> 
+  mutate(uso_solo = case_when(
+    uso_solo == 'Sim' ~ 'Urbano',
+    uso_solo == 'Nao' ~ 'Rural')) |> 
+  group_by(tipo_acidente, uso_solo) |> 
+  summarise(qtd_acc = n(), qtd_mortos = sum(mortos)) |> 
+  mutate(
+    pct_acc = qtd_acc / sum(qtd_acc) * 100,
+    pct_mortos = qtd_mortos / sum(qtd_mortos) * 100) |>
+  select(tipo_acidente, uso_solo, starts_with("pct"))
+
+# periodo do dia
+df |> 
+  filter(tipo_acidente %in% c("Colisao frontal", "Atropelamento de pedestre")) |> 
+  group_by(tipo_acidente, fase_dia) |> 
+  summarise(qtd_acc = n(), qtd_mortos = sum(mortos)) |> 
+  mutate(
+    pct_acc = qtd_acc / sum(qtd_acc) * 100,
+    pct_mortos = qtd_mortos / sum(qtd_mortos) * 100) |>
+  select(tipo_acidente, fase_dia, starts_with("pct"))
+```
+
+Em relação aos atropelamentos, esses eventos ocorrem com bastante frequência nas rodovias federais. Em 2021 houve 2.909 acidentes com atropelamento, com 898 mortes e 1.258 feridos graves. Os estados de Paraná, Minas Gerais, São Paulo e Rio de Janeiro registraram 41% dos pedestres mortos em acidentes. Além disso, destaca-se:
+
+- 47% dos acidentes e 50,5% das mortes ocorreram no fim de semana
+
+```{r}
+# qtd acidentes, mortos, feridos
+df |> 
+  filter(tipo_acidente == "Atropelamento de pedestre") |> 
+  summarise(
+    qtd_acidentes = n(),
+    qtd_mortos = sum(mortos),
+    qtd_feridos_leves = sum(feridos_leves),
+    qtd_feridos_graves = sum(feridos_graves))
+
+# por uf
+(tb2 <- df |> 
+  filter(tipo_acidente == "Atropelamento de pedestre") |> 
+  group_by(uf) |> 
+  summarise(
+    qtd_acidentes = n(),
+    qtd_mortos = sum(mortos),
+    qtd_feridos_leves = sum(feridos_leves),
+    qtd_feridos_graves = sum(feridos_graves), .groups = "drop") |>
+  mutate(
+    pct_acidentes = qtd_acidentes / sum(qtd_acidentes) * 100,
+    pct_mortos = qtd_mortos / sum(qtd_mortos) * 100) |> 
+  slice_max(n = 20, order_by = pct_acidentes) )
+
+## grafico por uf
+tb2 |> 
+  tidyr::pivot_longer(
+    cols = c(pct_acidentes, pct_mortos),
+    names_to = "pct",
+    values_to = "pct_values") |> 
+  ggplot(aes(uf, pct_values, fill = pct)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  coord_flip()
+
+# explorando mortes por atropelamento
+df |> 
+  filter(tipo_acidente == "Atropelamento de pedestre") |> 
+  group_by(dia_semana) |> 
+  summarise(qtd = sum(mortos), .groups = "drop") |> 
   mutate(pct = qtd / sum(qtd) * 100)
 ```
+
+
+
+
 
