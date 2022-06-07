@@ -160,9 +160,11 @@ df |>
   select(tipo_acidente, fase_dia, starts_with("pct"))
 ```
 
-Em relação aos atropelamentos, esses eventos ocorrem com bastante frequência nas rodovias federais. Em 2021 houve 2.909 acidentes com atropelamento, com 898 mortes e 1.258 feridos graves. Os estados de Paraná, Minas Gerais, São Paulo e Rio de Janeiro registraram 41% dos pedestres mortos em acidentes. Além disso, destaca-se:
+Em relação aos atropelamentos, esses eventos ocorrem com bastante frequência nas rodovias federais. Em 2021 houve 2.909 acidentes com atropelamento, com 898 mortes e 1.258 feridos graves. Os estados de Paraná, Minas Gerais, São Paulo e Rio de Janeiro registraram 41% dos pedestres mortos em acidentes. Além disso, ainda nesse tipo de acidente, destaca-se:
 
-- 47% dos acidentes e 50,5% das mortes ocorreram no fim de semana
+- 31,48% dos acidentes e 36,63% das mortes ocorreram no fim de semana (sábado e domingo)
+- 74% dos acidentes e mortes ocorreram em vias retas
+- A BR-116 e a BR-101 são responsáveis por 38,53% das ocorrências de atropelamento de pessoas
 
 ```{r}
 # qtd acidentes, mortos, feridos
@@ -199,11 +201,49 @@ tb2 |>
   coord_flip()
 
 # explorando mortes por atropelamento
-df |> 
-  filter(tipo_acidente == "Atropelamento de pedestre") |> 
-  group_by(dia_semana) |> 
-  summarise(qtd = sum(mortos), .groups = "drop") |> 
-  mutate(pct = qtd / sum(qtd) * 100)
+atropelamento_by_x <- function(.col) {
+  df |> 
+    filter(tipo_acidente == "Atropelamento de pedestre") |> 
+    group_by({{.col}}) |> 
+    summarise(qtd_acc = n(), qtd_mortos = sum(mortos), .groups = "drop") |>
+    mutate(
+      pct_acc = qtd_acc / sum(qtd_acc) * 100,
+      pct_mortos = qtd_mortos / sum(qtd_mortos) * 100)
+}
+
+
+## dia_semana
+atropelamento_by_x(dia_semana)
+
+## hora
+atropelamento_by_x(hora) |> 
+  rename(`Acidentes`= pct_acc, `Mortos` = pct_mortos) |> 
+  tidyr::pivot_longer(
+    Acidentes:Mortos,
+    names_to = "pct_type",
+    values_to = "pct_values") |> 
+  mutate(hora = as.integer(hora)) |> 
+  ggplot(aes(hora, pct_values, color = pct_type)) +
+  geom_line(size = 1.3) +
+  geom_label(aes(label = round(pct_values, 1)), nudge_x = 0.35, size = 4) +
+  scale_color_manual("", values = c("#3EAEAE", "#32593A")) +
+  scale_x_continuous(breaks = 0:23) +
+  geom_vline(xintercept = 17, color = "red", size = 1, linetype = "dashed") +
+  geom_vline(xintercept = 22, color = "red", size = 1, , linetype = "dashed") +
+  theme_minimal() +
+  theme(legend.title = element_blank()) +
+  labs(x = NULL, y = "%", title = "% de acidentes e mortos por atropelamentos por hora do dia (2021)")
+  
+
+## classificacao_acidente
+atropelamento_by_x(classificacao_acidente)
+
+## tipo pista
+atropelamento_by_x(tracado_via)
+
+## br
+atropelamento_by_x(br)
+
 ```
 
 
