@@ -10,8 +10,6 @@ library(ggplot2)
 df <- readr::read_csv('ocorrencias_2021.csv')
 ```
 
-https://www.ipea.gov.br/portal/images/stories/PDFs/relatoriopesquisa/150922_relatorio_acidentes_transito.pdf
-
 ## Dados
 
 
