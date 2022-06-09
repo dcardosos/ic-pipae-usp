@@ -1,6 +1,6 @@
 ---
 title: "Exploratória - IPEA"
-output: html_document
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
@@ -17,7 +17,7 @@ df <- readr::read_csv('ocorrencias_2021.csv')
 
 Em 2021 ocorreram 64.515 acidentes nas estradas federais fiscalizadas pela PRF, sendo  que 5.395 pessoas perderam a vida e 71.780 ficaram feridos. Pouco mais de um quarto dos feridos teve lesões graves. Nesse ano, cerca de 7% dos acidentes apresentaram vítimas  fatais; 74%, vítimas feridas; e 18% foram acidentes sem vítimas. Aproximadamente 72% dos acidentes com vítimas fatais ocorreram em zonas rurais, e 24% das mortes foram causadas por excesso de velocidade e transitar na contramão.
 
-```{r caracteristicas por classificacao}
+```{r caracteristicas_1, echo=FALSE}
 tb1 <- df |> 
   group_by(classificacao_acidente) |> 
   summarise(
@@ -30,14 +30,15 @@ tb1 <- df |>
 tb1 |> 
   rename(Categoria = classificacao_acidente) |> 
   janitor::adorn_totals() |> 
-  knitr::kable()
+  knitr::kable(caption = "Tabela 1 - Quantidade de acidentes nas rodovias federais e de vítimas (2021)")
 
 # porcentagens
 tb1 |>  
   mutate(
     across(
       .cols = c(Acidentes, `Veículos envolvidos`, Ilesos, Feridos, Mortos),
-      .fns = ~.x / sum(.x) * 100))
+      .fns = ~.x / sum(.x) * 100)) |> 
+  knitr::kable(caption = "Tabela 2 - % de Acidentes, Veículos, Ilesos e Feridos por classificação de acidente em rodovias federais (2021)")
 
 # acidentes  com vitimas fatais rural / urbano
 ## sim = urbano, nao = rural
@@ -49,39 +50,47 @@ df |>
   filter(classificacao_acidente == "Com vitimas fatais") |> 
   group_by(uso_solo) |> 
   summarise(Acidentes = n(), .groups = "drop") |> 
-  mutate(Acidentes = Acidentes / sum(Acidentes) * 100)
+  mutate(Acidentes = Acidentes / sum(Acidentes) * 100) |> 
+  knitr::kable(caption = "Tabela 3 - Uso do solo em acidentes com vítimas fatais nas rodovias federais (2021)")
 
 # causa acidente - mortes
 df |> 
   group_by(causa_acidente) |> 
   summarise(Mortos = sum(mortos), .groups = "drop") |> 
   mutate(Mortos = Mortos / sum(Mortos) * 100) |> 
-  arrange(-Mortos)
+  slice_max(n = 15, order_by = Mortos) |> 
+  knitr::kable(caption = "Tabela 4 - Principais causas de mortes nas rodovias federais (2021)")
 ```
 Nesse mesmo ano, ocorreram em média 177 acidentes e houve 14 mortos por dia. Esses acidentes envolveram 106.697 veículos, uma média de 1,65 veículos por ocorrência. O estado de Minas Gerais foi o que apresentou o maior número de acidentes e mortos, enquanto o estado do Amazonas, o menor.
 
-```{r include=FALSE}
-# média de acidentes/mortes e veicuos por ocorrencia
+```{r echo=FALSE}
+# média de acidentes/mortes e veiculos por ocorrencia
 df |> 
   summarise(
     qtd_days = as.integer(max(data) - min(data)),
     media_acidentes_day = n() / qtd_days,
     media_mortes_day = sum(mortos) / qtd_days,
-    media_veiculos_ocorr = sum(veiculos) / n())
+    media_veiculos_ocorrencia = sum(veiculos) / n()) |> 
+  select(-qtd_days) |> 
+  tidyr::pivot_longer(cols = everything(), names_to ="Indicador", values_to = "Valor") |> 
+  knitr::kable(caption = "Tabela 5 - Indicadores médios de mortes e ocorrências por dia nas rodovias federais (2021)")
 
 # estados com maior/menor numero de acidentes e mortos
 df |> 
   group_by(uf) |> 
   summarise(qtd_acidentes = n()) |>
   ggplot(aes(reorder(uf, qtd_acidentes), qtd_acidentes)) +
-  geom_col() +
-  labs(x = "Estado", y = NULL) +
+  geom_col(fill = "#3EAEAE") +
+  geom_label(aes(label =qtd_acidentes), size = 1.5) + 
+  theme_minimal() + 
+  theme(plot.title = element_text(size=8)) + 
+  labs(x = "UF", y = NULL, title = "Gráfico 1 - Quantidade de acidentes nas rodovias federais por estado (2021)") +
   coord_flip() 
 ```
 
 Considerando a mortalidade por tipo de acidente, verifica-se que a colisão frontal foi responsável por 36,6% das mortes, seguida pelos atropelamentos de pessoas, responsável por 30,9% das mortes. Esses tipos de acidente responderam por 11,2% do total e, embora menos frequentes, foram os mais letais. Nos acidentes do tipo colisão frontal, morreram 36,6 pessoas a cada cem acidentes; e nos do tipo atropelamento de pessoas, 30,8. Chama a atenção também a frequência de colisões traseiras e transversais, que correspondem a 31,5% dos acidentes, que somado ao segundo maior tipo de acidente frequente, saída de leito carrocável, equivalem a quase metade dos acidentes, isto é, uma concentração em tipos de acidentes comuns.	
 
-```{r}
+```{r echo=FALSE}
 df |> 
   group_by(tipo_acidente) |> 
   summarise(
@@ -91,8 +100,9 @@ df |>
     `Acidentes Graves` = sum(feridos_graves),
     `Mortes/100 acidentes` = Mortos / Acidentes * 100, .groups = "drop") |>
   mutate(`% Acidentes` = Acidentes / sum(Acidentes) * 100) |> 
+  rename(`Tipo de Acidente` = tipo_acidente) |> 
   arrange(-`Mortes/100 acidentes`) |> 
-  knitr::kable()
+  knitr::kable(caption = "Tabela 6 - Tipo versus gravidade dos acidentes nas rodovias federais (2021)")
 
 df |> 
   group_by(tipo_acidente) |> 
@@ -117,26 +127,32 @@ df |>
   ) + 
   coord_flip() +
   theme_minimal() +
-  theme(legend.title = element_blank()) +
-  labs(x = NULL, y = NULL,  title = "Tipo versus gravidade dos acidentes nas rodovias federais (2021)")
+  theme(legend.title = element_blank(), legend.position = "bottom", plot.title = element_text(size=8)) +
+  labs(x = NULL, y = NULL,  title = "Gráfico 2 - Tipo versus gravidade dos acidentes nas rodovias federais (2021)")
 ```
 
 Focando os dois principais tipos de acidente que geram mais óbitos pode-se traçar um perfil dessas ocorrências: 88,88% das colisões frontais ocorreram em pistas simples, ocasionando 93,96% dos mortos nesse tipo de acidente; além disso, 70% das colisões ocorreram em trechos rurais, que ocasionou 86% dos mortos nesse tipo. Em ambos tipos de acidente, mais de 88% das ocorrências e mortes aconteceram nos períodos *plenos* - dia e noite. 
 
-```{r}
+```{r echo=FALSE}
 # tipo pista
 df |> 
-  filter(tipo_acidente %in% c("Colisao frontal", "Atropelamento de pedestre")) |> 
+  filter(tipo_acidente %in% c("Colisao frontal", "Atropelamento de pedestre")) |>
   group_by(tipo_acidente, tipo_pista) |> 
   summarise(qtd_acc = n(), qtd_mortos = sum(mortos)) |> 
   mutate(
     pct_acc = qtd_acc / sum(qtd_acc) * 100,
     pct_mortos = qtd_mortos / sum(qtd_mortos) * 100) |>
-  select(tipo_acidente, tipo_pista, starts_with("pct"))
+  select(tipo_acidente, tipo_pista, starts_with("pct")) |> 
+  rename(
+    `Tipo de acidente` = tipo_acidente,
+    `Tipo de pista` = tipo_pista,
+    `% Acidentes` = pct_acc,
+    `% Mortos` = pct_mortos) |> 
+  knitr::kable(caption = "Tabela 7 - Colisões frontais e atropelamentos por tipo de pista nas rodovias federais (2021)")
 
 # rural ou urbano
 df |> 
-  filter(tipo_acidente %in% c("Colisao frontal", "Atropelamento de pedestre")) |> 
+  filter(tipo_acidente %in% c("Colisao frontal", "Atropelamento de pedestre")) |>
   mutate(uso_solo = case_when(
     uso_solo == 'Sim' ~ 'Urbano',
     uso_solo == 'Nao' ~ 'Rural')) |> 
@@ -145,7 +161,13 @@ df |>
   mutate(
     pct_acc = qtd_acc / sum(qtd_acc) * 100,
     pct_mortos = qtd_mortos / sum(qtd_mortos) * 100) |>
-  select(tipo_acidente, uso_solo, starts_with("pct"))
+  select(tipo_acidente, uso_solo, starts_with("pct")) |> 
+  rename(
+    `Tipo de acidente` = tipo_acidente,
+    `Tipo de solo` = uso_solo,
+    `% Acidentes` = pct_acc,
+    `% Mortos` = pct_mortos) |> 
+  knitr::kable(caption = "Tabela 8 - Colisões frontais e atropelamentos por tipo de solo nas rodovias federais (2021)")
 
 # periodo do dia
 df |> 
@@ -155,7 +177,13 @@ df |>
   mutate(
     pct_acc = qtd_acc / sum(qtd_acc) * 100,
     pct_mortos = qtd_mortos / sum(qtd_mortos) * 100) |>
-  select(tipo_acidente, fase_dia, starts_with("pct"))
+  select(tipo_acidente, fase_dia, starts_with("pct")) |> 
+  rename(
+    `Tipo de acidente` = tipo_acidente,
+    `Fase do dia` = fase_dia,
+    `% Acidentes` = pct_acc,
+    `% Mortos` = pct_mortos) |> 
+  knitr::kable(caption = "Tabela 9 - Colisões frontais e atropelamentos por períoodo do dia nas rodovias federais (2021)")
 ```
 
 Em relação aos atropelamentos, esses eventos ocorrem com bastante frequência nas rodovias federais. Em 2021 houve 2.909 acidentes com atropelamento, com 898 mortes e 1.258 feridos graves. Os estados de Paraná, Minas Gerais, São Paulo e Rio de Janeiro registraram 41% dos pedestres mortos em acidentes. Além disso, ainda nesse tipo de acidente, destaca-se:
@@ -164,7 +192,7 @@ Em relação aos atropelamentos, esses eventos ocorrem com bastante frequência 
 - 74% dos acidentes e mortes ocorreram em vias retas
 - A BR-116 e a BR-101 são responsáveis por 38,53% das ocorrências de atropelamento de pessoas
 
-```{r}
+```{r echo=FALSE}
 # qtd acidentes, mortos, feridos
 df |> 
   filter(tipo_acidente == "Atropelamento de pedestre") |> 
@@ -172,10 +200,12 @@ df |>
     qtd_acidentes = n(),
     qtd_mortos = sum(mortos),
     qtd_feridos_leves = sum(feridos_leves),
-    qtd_feridos_graves = sum(feridos_graves))
+    qtd_feridos_graves = sum(feridos_graves)) |> 
+  tidyr::pivot_longer(everything(), names_to = "Indicador", values_to = "Valor") |> 
+  knitr::kable(caption = "Tabela 10 - Indicadores de quantidade para casos de atropelamentos de pessoas (2021)")
 
 # por uf
-(tb2 <- df |> 
+tb2 <- df |> 
   filter(tipo_acidente == "Atropelamento de pedestre") |> 
   group_by(uf) |> 
   summarise(
@@ -186,17 +216,22 @@ df |>
   mutate(
     pct_acidentes = qtd_acidentes / sum(qtd_acidentes) * 100,
     pct_mortos = qtd_mortos / sum(qtd_mortos) * 100) |> 
-  slice_max(n = 20, order_by = pct_acidentes) )
+  slice_max(n = 20, order_by = pct_acidentes)
 
 ## grafico por uf
 tb2 |> 
+  rename(`Acidentes`= pct_acidentes, `Mortos` = pct_mortos) |> 
   tidyr::pivot_longer(
-    cols = c(pct_acidentes, pct_mortos),
+    cols = c(Acidentes, Mortos),
     names_to = "pct",
     values_to = "pct_values") |> 
   ggplot(aes(uf, pct_values, fill = pct)) +
   geom_bar(stat = "identity", position = "dodge") +
-  coord_flip()
+  scale_fill_manual("", values = c("#3EAEAE", "#32593A")) +
+  theme_minimal() +
+  theme(legend.position = "bottom", plot.title = element_text(size=8))
+  labs(x = "UF", y = "%", title = "Gráfico 3 - UF versus gravidade dos atropelamentos de pessoas nas rodovias federais (2021)") +
+  coord_flip() 
 
 # explorando mortes por atropelamento
 atropelamento_by_x <- function(.col) {
@@ -211,7 +246,23 @@ atropelamento_by_x <- function(.col) {
 
 
 ## dia_semana
-atropelamento_by_x(dia_semana)
+atropelamento_by_x(dia_semana) |> 
+  rename(`Acidentes`= pct_acc, `Mortos` = pct_mortos) |> 
+  tidyr::pivot_longer(
+    cols = c(Acidentes, Mortos),
+    names_to = "pct",
+    values_to = "pct_values") |> 
+  ggplot(aes(dia_semana, pct_values, fill = pct)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_fill_manual("", values = c("#3EAEAE", "#32593A")) +
+  geom_text(
+    aes(reorder(dia_semana, pct_values), label = round(pct_values, 1), fill = pct),
+    position = position_dodge(width = 1),
+    hjust = 0.5, size = 4) +
+  theme_minimal() +
+  theme(legend.position = "bottom", plot.title = element_text(size=8)) + 
+  labs(x = NULL, y = "%", title = "Gráfico 4 - Dia da semana versus gravidade dos atropelamentos de pessoas nas rodovias federais (2021)") +
+  coord_flip() 
 
 ## hora
 atropelamento_by_x(hora) |> 
@@ -223,29 +274,48 @@ atropelamento_by_x(hora) |>
   mutate(hora = as.integer(hora)) |> 
   ggplot(aes(hora, pct_values, color = pct_type)) +
   geom_line(size = 1.3) +
-  geom_label(aes(label = round(pct_values, 1)), nudge_x = 0.35, size = 4, show.legend = FALSE) +
+  geom_label(aes(label = round(pct_values, 1)), nudge_x = 0.35, size = 2, show.legend = FALSE) +
   scale_color_manual("", values = c("#3EAEAE", "#32593A")) +
   scale_x_continuous(breaks = 0:23) +
   geom_vline(xintercept = 17, color = "red", size = 1, linetype = "dashed") +
   geom_vline(xintercept = 22, color = "red", size = 1, linetype = "dashed") +
   theme_minimal() +
-  theme(legend.title = element_blank()) +
-  labs(x = NULL, y = "%", title = "% de acidentes e mortos por atropelamentos por hora do dia (2021)")
+  theme(legend.position = "bottom", plot.title = element_text(size=8), legend.title = element_blank()) +
+  labs(x = NULL, y = "%", title = "Gráfico 5 - Hora do dia versus gravidade dos atropelamentos de pessoas nas rodovias federais (2021)")
   
 
-## classificacao_acidente
-atropelamento_by_x(classificacao_acidente)
 
+## classificacao_acidente
+atropelamento_by_x(classificacao_acidente) |> 
+  knitr::kable(col.names = c("Classificação do acidente",
+                             "Qtde. de acidentes",
+                             "Qtde. de mortos",
+                             "% Acidentes",
+                             "% Mortos"), 
+               caption = "Classificação do acidente versus gravidade dos atropelamentos de pessoas nas rodovias federais (2021)")
 ## tipo pista
-atropelamento_by_x(tracado_via)
+atropelamento_by_x(tracado_via) |> 
+  knitr::kable(col.names = c("Traçado da via",
+                             "Qtde. de acidentes",
+                             "Qtde. de mortos",
+                             "% Acidentes",
+                             "% Mortos"), 
+               caption = "Traçado da via versus gravidade dos atropelamentos de pessoas nas rodovias federais (2021)")
 
 ## br
-atropelamento_by_x(br)
+atropelamento_by_x(br) |> 
+  slice_max(n = 15, order_by = qtd_acc) |> 
+  knitr::kable(col.names = c("BR da rodovia",
+                             "Qtde. de acidentes",
+                             "Qtde. de mortos",
+                             "% Acidentes",
+                             "% Mortos"), 
+               caption = "Rodovia BR do acidente versus gravidade dos atropelamentos de pessoas nas rodovias federais (2021)")
 ```
 
 ## Estatísticas dos acidentes de trânsito nas rodovias federais (anos)
 
-```{r}
+```{r echo=FALSE}
 df |>
   group_by(ano) |> 
   summarise(
@@ -264,7 +334,9 @@ df |>
     cols = -ano,
     names_to = "Item",
     values_to = "value") |> 
-  tidyr::pivot_wider(names_from = ano)
+  mutate(value = round(value, 1)) |> 
+  tidyr::pivot_wider(names_from = ano) |> 
+  knitr::kable(caption = "Estatísticas dos acidentes de trânsito nas rodovias federais (2021, ...)")
   
 ```
 
