@@ -149,7 +149,7 @@ df |>
   labs(x = NULL, y = NULL,  title = "Gráfico 2 - Tipo versus gravidade dos acidentes nas rodovias federais (2021)")
 ```
 
-## Perfil dos dois tipos acidentes com maior gravidade em 2021
+### Perfil dos dois tipos acidentes com maior gravidade em 2021
 
 Focando os dois principais tipos de acidente que geram mais óbitos pode-se traçar um perfil dessas ocorrências: 88,88% das colisões frontais ocorreram em pistas simples, ocasionando 93,96% dos mortos nesse tipo de acidente; além disso, 70% das colisões ocorreram em trechos rurais, que ocasionou 86% dos mortos nesse tipo. Em ambos tipos de acidente, mais de 88% das ocorrências e mortes aconteceram nos períodos *plenos* - dia e noite. 
 
@@ -345,40 +345,52 @@ atropelamento_by_x(br) |>
 ## Análise da evolução de indicadores na última década (2010-2021)
 
 ```{r include=FALSE}
-# basedosdados::read_query(
-#   "
-#   SELECT *
-#   FROM `rodoviar.br_prf_acidentes_rodoviarios.acidentes_por_ocorrencia
-#   WHERE ano > 2009 AND ano < 2021") -> anual
+anual <- readr::read_csv("indicadores_anual.csv")
+
 ```
 
 
 ```{r echo=FALSE}
-anual |>
-  group_by(ano) |> 
-  summarise(
-    `Total de acidentes` = n(),
-    `Número de veículos envolvidos` = sum(veiculos),
-    `Número de mortes` = sum(mortos),
-    `Mortes/1.000 acidentes` =  sum(mortos) / n() * 1000,
-    `Número de acidentes/morte` = n() / sum(mortos),
-    `Número de feridos` = sum(feridos),
-    `Feridos/1.000 acidentes` = sum(feridos) / n() * 1000,
-    `Número de acidentes/ferido` = n() / sum(feridos),
-    `Número de ilesos` = sum(ilesos),
-    `Ilesos/1.000 acidentes` = sum(ilesos) / n() * 1000,
-    `Número de acidentes/ileso` = n() / sum(ilesos)) |> 
+
+tb3 <- anual |>
+  arrange(ano) |> 
+    rename(
+    `Total de acidentes` = total_acidentes,
+    `Número de veículos envolvidos` = num_veiculos_envolvidos,
+    `Número de mortes` =num_mortes,
+    `Mortes/1.000 acidentes` =  mortes__mil_acidentes,
+    `Número de acidentes/morte` = num_acidentes__mortea,
+    `Número de feridos` = num_feridos,
+    `Feridos/1.000 acidentes` = feridos__mil_acidentes,
+    `Número de acidentes/ferido` =num_acidentes__ferido,
+    `Número de ilesos` = num_ilesos,
+    `Ilesos/1.000 acidentes` = ilesos__mil_acidentes,
+    `Número de acidentes/ileso` = num_acidentes__ileso) |> 
   tidyr::pivot_longer(
     cols = -ano,
     names_to = "Item",
     values_to = "value") |> 
-  mutate(value = round(value, 1)) |> 
+  mutate(value = round(value, 1))
+
+tb3 |> 
   tidyr::pivot_wider(names_from = ano) |> 
-  knitr::kable(caption = "Estatísticas dos acidentes de trânsito nas rodovias federais (2021, ...)")
+  knitr::kable(caption = "Estatísticas dos acidentes de trânsito nas rodovias federais (2010 - 2021)")
   
+tb3 |> 
+  filter(Item %in% c("Mortes/1.000 acidentes", "Número de acidentes/morte")) |> 
+  ggplot(aes(as.integer(ano), value, color = Item)) +
+  geom_line(size = 1.3) +
+  geom_label(aes(label = round(value, 1)), nudge_x = 0.35, size = 2, show.legend = FALSE) +
+  scale_color_manual("", values = c("#3EAEAE", "#32593A")) +
+  theme_minimal() +
+  labs(
+    x = NULL,
+    y = "Indicador"
+  )
 ```
 
 
+##
 
 
 
