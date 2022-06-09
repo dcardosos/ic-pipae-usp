@@ -1,5 +1,6 @@
 ---
-title: "Exploratória - IPEA"
+title: "Análise exploratória dos acidentes de trânsito nas rodovias federais"
+author: "Douglas Cardoso"
 output: pdf_document
 ---
 
@@ -7,11 +8,25 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 library(dplyr)
 library(ggplot2)
+
+# basedosdados::set_billing_id("<id>")
+# basedosdados::read_query(
+#   "
+#   SELECT *
+#   FROM `rodoviar.br_prf_acidentes_rodoviarios.acidentes_por_ocorrencia
+#   WHERE ano > 2009 AND ano < 2021") -> df
+
 df <- readr::read_csv('ocorrencias_2021.csv')
 ```
+## Para fazer
+
+- acidentes e mortos gerais, considerando todos os tipos de acidentes
+- descrição das variáveis de nossos dados
+- séries temporais
 
 ## Dados
 
+Para a primeira parte, de caracaterização dos acidentes de trânsito, foram utilizados dados apenas de 2021, entendendo o perfil dos acidentes. Após essa análise exploratória, foi feita uma comparação ano a ano, entendendo as evoluções dos indicadores. 
 
 ## Caracterização dos acidentes de trânsito nas rodovias federais em 2021
 
@@ -38,6 +53,7 @@ tb1 |>
     across(
       .cols = c(Acidentes, `Veículos envolvidos`, Ilesos, Feridos, Mortos),
       .fns = ~.x / sum(.x) * 100)) |> 
+  rename(Categoria = classificacao_acidente) |> 
   knitr::kable(caption = "Tabela 2 - % de Acidentes, Veículos, Ilesos e Feridos por classificação de acidente em rodovias federais (2021)")
 
 # acidentes  com vitimas fatais rural / urbano
@@ -51,6 +67,7 @@ df |>
   group_by(uso_solo) |> 
   summarise(Acidentes = n(), .groups = "drop") |> 
   mutate(Acidentes = Acidentes / sum(Acidentes) * 100) |> 
+  rename(`Tipo de solo` = uso_solo) |> 
   knitr::kable(caption = "Tabela 3 - Uso do solo em acidentes com vítimas fatais nas rodovias federais (2021)")
 
 # causa acidente - mortes
@@ -59,11 +76,12 @@ df |>
   summarise(Mortos = sum(mortos), .groups = "drop") |> 
   mutate(Mortos = Mortos / sum(Mortos) * 100) |> 
   slice_max(n = 15, order_by = Mortos) |> 
+  rename(Categoria = classificacao_acidente) |> 
   knitr::kable(caption = "Tabela 4 - Principais causas de mortes nas rodovias federais (2021)")
 ```
 Nesse mesmo ano, ocorreram em média 177 acidentes e houve 14 mortos por dia. Esses acidentes envolveram 106.697 veículos, uma média de 1,65 veículos por ocorrência. O estado de Minas Gerais foi o que apresentou o maior número de acidentes e mortos, enquanto o estado do Amazonas, o menor.
 
-```{r echo=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 # média de acidentes/mortes e veiculos por ocorrencia
 df |> 
   summarise(
@@ -90,7 +108,7 @@ df |>
 
 Considerando a mortalidade por tipo de acidente, verifica-se que a colisão frontal foi responsável por 36,6% das mortes, seguida pelos atropelamentos de pessoas, responsável por 30,9% das mortes. Esses tipos de acidente responderam por 11,2% do total e, embora menos frequentes, foram os mais letais. Nos acidentes do tipo colisão frontal, morreram 36,6 pessoas a cada cem acidentes; e nos do tipo atropelamento de pessoas, 30,8. Chama a atenção também a frequência de colisões traseiras e transversais, que correspondem a 31,5% dos acidentes, que somado ao segundo maior tipo de acidente frequente, saída de leito carrocável, equivalem a quase metade dos acidentes, isto é, uma concentração em tipos de acidentes comuns.	
 
-```{r echo=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 df |> 
   group_by(tipo_acidente) |> 
   summarise(
@@ -131,9 +149,11 @@ df |>
   labs(x = NULL, y = NULL,  title = "Gráfico 2 - Tipo versus gravidade dos acidentes nas rodovias federais (2021)")
 ```
 
+## Perfil dos dois tipos acidentes com maior gravidade em 2021
+
 Focando os dois principais tipos de acidente que geram mais óbitos pode-se traçar um perfil dessas ocorrências: 88,88% das colisões frontais ocorreram em pistas simples, ocasionando 93,96% dos mortos nesse tipo de acidente; além disso, 70% das colisões ocorreram em trechos rurais, que ocasionou 86% dos mortos nesse tipo. Em ambos tipos de acidente, mais de 88% das ocorrências e mortes aconteceram nos períodos *plenos* - dia e noite. 
 
-```{r echo=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 # tipo pista
 df |> 
   filter(tipo_acidente %in% c("Colisao frontal", "Atropelamento de pedestre")) |>
@@ -192,7 +212,7 @@ Em relação aos atropelamentos, esses eventos ocorrem com bastante frequência 
 - 74% dos acidentes e mortes ocorreram em vias retas
 - A BR-116 e a BR-101 são responsáveis por 38,53% das ocorrências de atropelamento de pessoas
 
-```{r echo=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE}
 # qtd acidentes, mortos, feridos
 df |> 
   filter(tipo_acidente == "Atropelamento de pedestre") |> 
@@ -229,7 +249,7 @@ tb2 |>
   geom_bar(stat = "identity", position = "dodge") +
   scale_fill_manual("", values = c("#3EAEAE", "#32593A")) +
   theme_minimal() +
-  theme(legend.position = "bottom", plot.title = element_text(size=8))
+  theme(legend.position = "bottom", plot.title = element_text(size=8)) +
   labs(x = "UF", y = "%", title = "Gráfico 3 - UF versus gravidade dos atropelamentos de pessoas nas rodovias federais (2021)") +
   coord_flip() 
 
@@ -251,8 +271,17 @@ atropelamento_by_x(dia_semana) |>
   tidyr::pivot_longer(
     cols = c(Acidentes, Mortos),
     names_to = "pct",
-    values_to = "pct_values") |> 
-  ggplot(aes(dia_semana, pct_values, fill = pct)) +
+    values_to = "pct_values") |>
+  mutate(
+    id_order = case_when(
+      dia_semana == "sexta" ~ 1,
+      dia_semana == "sabado" ~ 2,
+      dia_semana == "domingo" ~ 3,
+      dia_semana == "segunda" ~ 4,
+      dia_semana == "terca" ~ 5,
+      dia_semana == "quarta" ~ 6,
+      dia_semana == "quinta" ~ 7)) |> 
+  ggplot(aes(reorder(dia_semana, -id_order), pct_values, fill = pct)) +
   geom_bar(stat = "identity", position = "dodge") +
   scale_fill_manual("", values = c("#3EAEAE", "#32593A")) +
   geom_text(
@@ -313,10 +342,19 @@ atropelamento_by_x(br) |>
                caption = "Rodovia BR do acidente versus gravidade dos atropelamentos de pessoas nas rodovias federais (2021)")
 ```
 
-## Estatísticas dos acidentes de trânsito nas rodovias federais (anos)
+## Análise da evolução de indicadores na última década (2010-2021)
+
+```{r include=FALSE}
+# basedosdados::read_query(
+#   "
+#   SELECT *
+#   FROM `rodoviar.br_prf_acidentes_rodoviarios.acidentes_por_ocorrencia
+#   WHERE ano > 2009 AND ano < 2021") -> anual
+```
+
 
 ```{r echo=FALSE}
-df |>
+anual |>
   group_by(ano) |> 
   summarise(
     `Total de acidentes` = n(),
@@ -339,7 +377,6 @@ df |>
   knitr::kable(caption = "Estatísticas dos acidentes de trânsito nas rodovias federais (2021, ...)")
   
 ```
-
 
 
 
