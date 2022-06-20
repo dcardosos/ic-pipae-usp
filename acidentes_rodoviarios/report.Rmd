@@ -16,13 +16,16 @@ library(ggplot2)
 #   FROM `rodoviar.br_prf_acidentes_rodoviarios.acidentes_por_ocorrencia
 #   WHERE ano > 2009 AND ano < 2021") -> df
 
-df <- readr::read_csv('ocorrencias_2021.csv')
+df <- readr::read_csv('data/ocorrencias_2021.csv')
 ```
 ## Para fazer
 
-- acidentes e mortos gerais, considerando todos os tipos de acidentes
-- descrição das variáveis de nossos dados
-- séries temporais
+- 1. agregações a nível geral para uso de solo, horario e outros
+- 2. modelos de random forest e redes neurais 
+- 3. pensar em novos indicadores que reflete uma melhor análise dos dados
+- 4. descrição das variáveis de nossos dados, dicionário e entender a variável `km`
+- 5. estudar séries temporais
+- 6. ir pensando em policas publicas
 
 ## Dados
 
@@ -76,7 +79,7 @@ df |>
   summarise(Mortos = sum(mortos), .groups = "drop") |> 
   mutate(Mortos = Mortos / sum(Mortos) * 100) |> 
   slice_max(n = 15, order_by = Mortos) |> 
-  rename(Categoria = classificacao_acidente) |> 
+  rename(`Causa do acidente` = causa_acidente) |> 
   knitr::kable(caption = "Tabela 4 - Principais causas de mortes nas rodovias federais (2021)")
 ```
 Nesse mesmo ano, ocorreram em média 177 acidentes e houve 14 mortos por dia. Esses acidentes envolveram 106.697 veículos, uma média de 1,65 veículos por ocorrência. O estado de Minas Gerais foi o que apresentou o maior número de acidentes e mortos, enquanto o estado do Amazonas, o menor.
@@ -345,7 +348,7 @@ atropelamento_by_x(br) |>
 ## Análise da evolução de indicadores na última década (2010-2021)
 
 ```{r include=FALSE}
-anual <- readr::read_csv("indicadores_anual.csv")
+anual <- readr::read_csv("data/indicadores_anual.csv")
 
 ```
 
@@ -374,7 +377,8 @@ tb3 <- anual |>
 
 tb3 |> 
   tidyr::pivot_wider(names_from = ano) |> 
-  knitr::kable(caption = "Estatísticas dos acidentes de trânsito nas rodovias federais (2010 - 2021)")
+  knitr::kable(caption = "Estatísticas dos acidentes de trânsito nas rodovias federais (2010 - 2021)") |> 
+  kableExtra::kable_styling(font_size = 7)
   
 tb3 |> 
   filter(Item %in% c("Mortes/1.000 acidentes", "Número de acidentes/morte")) |> 
@@ -383,10 +387,7 @@ tb3 |>
   geom_label(aes(label = round(value, 1)), nudge_x = 0.35, size = 2, show.legend = FALSE) +
   scale_color_manual("", values = c("#3EAEAE", "#32593A")) +
   theme_minimal() +
-  labs(
-    x = NULL,
-    y = "Indicador"
-  )
+  labs(x = NULL, y = "Indicador")
 ```
 
 

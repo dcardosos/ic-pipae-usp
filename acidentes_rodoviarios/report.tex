@@ -1,0 +1,627 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\title{Análise exploratória dos acidentes de trânsito nas rodovias
+federais}
+\author{Douglas Cardoso}
+\date{}
+
+\usepackage{amsmath,amssymb}
+\usepackage{lmodern}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={Análise exploratória dos acidentes de trânsito nas rodovias federais},
+  pdfauthor={Douglas Cardoso},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{longtable,booktabs,array}
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+
+\begin{document}
+\maketitle
+
+\hypertarget{para-fazer}{%
+\subsection{Para fazer}\label{para-fazer}}
+
+\begin{itemize}
+\item
+  \begin{enumerate}
+  \def\labelenumi{\arabic{enumi}.}
+  \tightlist
+  \item
+    agregações a nível geral para uso de solo, horario e outros
+  \end{enumerate}
+\item
+  \begin{enumerate}
+  \def\labelenumi{\arabic{enumi}.}
+  \setcounter{enumi}{1}
+  \tightlist
+  \item
+    modelos de random forest e redes neurais
+  \end{enumerate}
+\item
+  \begin{enumerate}
+  \def\labelenumi{\arabic{enumi}.}
+  \setcounter{enumi}{2}
+  \tightlist
+  \item
+    pensar em novos indicadores que reflete uma melhor análise dos dados
+  \end{enumerate}
+\item
+  \begin{enumerate}
+  \def\labelenumi{\arabic{enumi}.}
+  \setcounter{enumi}{3}
+  \tightlist
+  \item
+    descrição das variáveis de nossos dados, dicionário e entender a
+    variável \texttt{km}
+  \end{enumerate}
+\item
+  \begin{enumerate}
+  \def\labelenumi{\arabic{enumi}.}
+  \setcounter{enumi}{4}
+  \tightlist
+  \item
+    estudar séries temporais
+  \end{enumerate}
+\item
+  \begin{enumerate}
+  \def\labelenumi{\arabic{enumi}.}
+  \setcounter{enumi}{5}
+  \tightlist
+  \item
+    ir pensando em policas publicas
+  \end{enumerate}
+\end{itemize}
+
+\hypertarget{dados}{%
+\subsection{Dados}\label{dados}}
+
+Para a primeira parte, de caracaterização dos acidentes de trânsito,
+foram utilizados dados apenas de 2021, entendendo o perfil dos
+acidentes. Após essa análise exploratória, foi feita uma comparação ano
+a ano, entendendo as evoluções dos indicadores.
+
+\hypertarget{caracterizauxe7uxe3o-dos-acidentes-de-truxe2nsito-nas-rodovias-federais-em-2021}{%
+\subsection{Caracterização dos acidentes de trânsito nas rodovias
+federais em
+2021}\label{caracterizauxe7uxe3o-dos-acidentes-de-truxe2nsito-nas-rodovias-federais-em-2021}}
+
+Em 2021 ocorreram 64.515 acidentes nas estradas federais fiscalizadas
+pela PRF, sendo que 5.395 pessoas perderam a vida e 71.780 ficaram
+feridos. Pouco mais de um quarto dos feridos teve lesões graves. Nesse
+ano, cerca de 7\% dos acidentes apresentaram vítimas fatais; 74\%,
+vítimas feridas; e 18\% foram acidentes sem vítimas. Aproximadamente
+72\% dos acidentes com vítimas fatais ocorreram em zonas rurais, e 24\%
+das mortes foram causadas por excesso de velocidade e transitar na
+contramão.
+
+\begin{longtable}[]{@{}lrrrrr@{}}
+\caption{Tabela 1 - Quantidade de acidentes nas rodovias federais e de
+vítimas (2021)}\tabularnewline
+\toprule
+Categoria & Acidentes & Veículos envolvidos & Ilesos & Feridos &
+Mortos \\
+\midrule
+\endfirsthead
+\toprule
+Categoria & Acidentes & Veículos envolvidos & Ilesos & Feridos &
+Mortos \\
+\midrule
+\endhead
+Com vitimas fatais & 4663 & 8073 & 4221 & 3676 & 5395 \\
+Com vitimas feridas & 48161 & 80306 & 40452 & 68104 & 0 \\
+Sem vitimas & 11691 & 18318 & 18671 & 0 & 0 \\
+Total & 64515 & 106697 & 63344 & 71780 & 5395 \\
+\bottomrule
+\end{longtable}
+
+\begin{longtable}[]{@{}lrrrrr@{}}
+\caption{Tabela 2 - \% de Acidentes, Veículos, Ilesos e Feridos por
+classificação de acidente em rodovias federais (2021)}\tabularnewline
+\toprule
+Categoria & Acidentes & Veículos envolvidos & Ilesos & Feridos &
+Mortos \\
+\midrule
+\endfirsthead
+\toprule
+Categoria & Acidentes & Veículos envolvidos & Ilesos & Feridos &
+Mortos \\
+\midrule
+\endhead
+Com vitimas fatais & 7.227777 & 7.566286 & 6.663615 & 5.121204 & 100 \\
+Com vitimas feridas & 74.650856 & 75.265471 & 63.860823 & 94.878796 &
+0 \\
+Sem vitimas & 18.121367 & 17.168243 & 29.475562 & 0.000000 & 0 \\
+\bottomrule
+\end{longtable}
+
+\begin{longtable}[]{@{}lr@{}}
+\caption{Tabela 3 - Uso do solo em acidentes com vítimas fatais nas
+rodovias federais (2021)}\tabularnewline
+\toprule
+Tipo de solo & Acidentes \\
+\midrule
+\endfirsthead
+\toprule
+Tipo de solo & Acidentes \\
+\midrule
+\endhead
+Rural & 71.75638 \\
+Urbano & 28.24362 \\
+\bottomrule
+\end{longtable}
+
+\begin{longtable}[]{@{}lr@{}}
+\caption{Tabela 4 - Principais causas de mortes nas rodovias federais
+(2021)}\tabularnewline
+\toprule
+Causa do acidente & Mortos \\
+\midrule
+\endfirsthead
+\toprule
+Causa do acidente & Mortos \\
+\midrule
+\endhead
+Velocidade incompativel & 12.548656 \\
+Transitar na contramao & 11.807229 \\
+Ausencia de reacao do condutor & 8.378128 \\
+Reacao tardia ou ineficiente do condutor & 8.007414 \\
+Ultrapassagem indevida & 6.635774 \\
+Pedestre andava na pista & 5.764597 \\
+Acessar a via sem observar a presenca dos outros veiculos & 5.616311 \\
+Manobra de mudanca de faixa & 4.856349 \\
+Condutor dormindo & 4.207600 \\
+Ingestao de alcool pelo condutor & 4.003707 \\
+Entrada inopinada do pedestre & 3.484708 \\
+Pedestre cruzava a pista fora da faixa & 2.947173 \\
+Condutor deixou de manter distancia do veiculo da frente & 2.075996 \\
+Chuva & 1.686747 \\
+Mal subito do condutor & 1.390176 \\
+\bottomrule
+\end{longtable}
+
+Nesse mesmo ano, ocorreram em média 177 acidentes e houve 14 mortos por
+dia. Esses acidentes envolveram 106.697 veículos, uma média de 1,65
+veículos por ocorrência. O estado de Minas Gerais foi o que apresentou o
+maior número de acidentes e mortos, enquanto o estado do Amazonas, o
+menor.
+
+\begin{longtable}[]{@{}lr@{}}
+\caption{Tabela 5 - Indicadores médios de mortes e ocorrências por dia
+nas rodovias federais (2021)}\tabularnewline
+\toprule
+Indicador & Valor \\
+\midrule
+\endfirsthead
+\toprule
+Indicador & Valor \\
+\midrule
+\endhead
+media\_acidentes\_day & 177.239011 \\
+media\_mortes\_day & 14.821429 \\
+media\_veiculos\_ocorrencia & 1.653832 \\
+\bottomrule
+\end{longtable}
+
+\includegraphics{report_files/figure-latex/unnamed-chunk-1-1.pdf}
+
+Considerando a mortalidade por tipo de acidente, verifica-se que a
+colisão frontal foi responsável por 36,6\% das mortes, seguida pelos
+atropelamentos de pessoas, responsável por 30,9\% das mortes. Esses
+tipos de acidente responderam por 11,2\% do total e, embora menos
+frequentes, foram os mais letais. Nos acidentes do tipo colisão frontal,
+morreram 36,6 pessoas a cada cem acidentes; e nos do tipo atropelamento
+de pessoas, 30,8. Chama a atenção também a frequência de colisões
+traseiras e transversais, que correspondem a 31,5\% dos acidentes, que
+somado ao segundo maior tipo de acidente frequente, saída de leito
+carrocável, equivalem a quase metade dos acidentes, isto é, uma
+concentração em tipos de acidentes comuns.
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.29}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.09}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.08}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.07}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.16}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.20}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.11}}@{}}
+\caption{Tabela 6 - Tipo versus gravidade dos acidentes nas rodovias
+federais (2021)}\tabularnewline
+\toprule
+\begin{minipage}[b]{\linewidth}\raggedright
+Tipo de Acidente
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Acidentes
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Feridos
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Mortos
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Acidentes Graves
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Mortes/100 acidentes
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+\% Acidentes
+\end{minipage} \\
+\midrule
+\endfirsthead
+\toprule
+\begin{minipage}[b]{\linewidth}\raggedright
+Tipo de Acidente
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Acidentes
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Feridos
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Mortos
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Acidentes Graves
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Mortes/100 acidentes
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+\% Acidentes
+\end{minipage} \\
+\midrule
+\endhead
+Colisao frontal & 4345 & 6727 & 1591 & 2755 & 36.6168009 & 6.7348679 \\
+Atropelamento de pedestre & 2909 & 2689 & 898 & 1258 & 30.8697147 &
+4.5090289 \\
+Colisao lateral sentido oposto & 1608 & 1973 & 163 & 601 & 10.1368159 &
+2.4924436 \\
+Eventos atipicos & 265 & 202 & 19 & 50 & 7.1698113 & 0.4107572 \\
+Saida de leito carrocavel & 10650 & 12056 & 669 & 2415 & 6.2816901 &
+16.5077889 \\
+Colisao com objeto & 4907 & 4531 & 302 & 971 & 6.1544732 & 7.6059831 \\
+Colisao transversal & 8017 & 9905 & 429 & 2829 & 5.3511289 &
+12.4265675 \\
+Atropelamento de animal & 978 & 1059 & 51 & 284 & 5.2147239 &
+1.5159265 \\
+Tombamento & 5567 & 6065 & 272 & 1167 & 4.8859350 & 8.6290010 \\
+Colisao traseira & 12310 & 13435 & 579 & 2834 & 4.7034931 &
+19.0808339 \\
+Capotamento & 1750 & 2293 & 82 & 428 & 4.6857143 & 2.7125475 \\
+Colisao lateral & 676 & 725 & 28 & 130 & 4.1420118 & 1.0478183 \\
+Derramamento de carga & 156 & 63 & 6 & 19 & 3.8461538 & 0.2418042 \\
+Colisao lateral mesmo sentido & 5566 & 5884 & 191 & 1152 & 3.4315487 &
+8.6274510 \\
+Queda de ocupante de veiculo & 2583 & 2947 & 87 & 603 & 3.3681765 &
+4.0037201 \\
+Engavetamento & 1054 & 1178 & 27 & 144 & 2.5616698 & 1.6337286 \\
+Incendio & 1174 & 48 & 1 & 4 & 0.0851789 & 1.8197318 \\
+\bottomrule
+\end{longtable}
+
+\includegraphics{report_files/figure-latex/unnamed-chunk-2-1.pdf}
+
+\hypertarget{perfil-dos-dois-tipos-acidentes-com-maior-gravidade-em-2021}{%
+\subsubsection{Perfil dos dois tipos acidentes com maior gravidade em
+2021}\label{perfil-dos-dois-tipos-acidentes-com-maior-gravidade-em-2021}}
+
+Focando os dois principais tipos de acidente que geram mais óbitos
+pode-se traçar um perfil dessas ocorrências: 88,88\% das colisões
+frontais ocorreram em pistas simples, ocasionando 93,96\% dos mortos
+nesse tipo de acidente; além disso, 70\% das colisões ocorreram em
+trechos rurais, que ocasionou 86\% dos mortos nesse tipo. Em ambos tipos
+de acidente, mais de 88\% das ocorrências e mortes aconteceram nos
+períodos \emph{plenos} - dia e noite.
+
+\begin{longtable}[]{@{}llrr@{}}
+\caption{Tabela 7 - Colisões frontais e atropelamentos por tipo de pista
+nas rodovias federais (2021)}\tabularnewline
+\toprule
+Tipo de acidente & Tipo de pista & \% Acidentes & \% Mortos \\
+\midrule
+\endfirsthead
+\toprule
+Tipo de acidente & Tipo de pista & \% Acidentes & \% Mortos \\
+\midrule
+\endhead
+Atropelamento de pedestre & Dupla & 48.504641 & 49.888641 \\
+Atropelamento de pedestre & Multipla & 11.584737 & 9.465479 \\
+Atropelamento de pedestre & Simples & 39.910622 & 40.645880 \\
+Colisao frontal & Dupla & 8.768700 & 4.965431 \\
+Colisao frontal & Multipla & 2.347526 & 1.068510 \\
+Colisao frontal & Simples & 88.883775 & 93.966059 \\
+\bottomrule
+\end{longtable}
+
+\begin{longtable}[]{@{}llrr@{}}
+\caption{Tabela 8 - Colisões frontais e atropelamentos por tipo de solo
+nas rodovias federais (2021)}\tabularnewline
+\toprule
+Tipo de acidente & Tipo de solo & \% Acidentes & \% Mortos \\
+\midrule
+\endfirsthead
+\toprule
+Tipo de acidente & Tipo de solo & \% Acidentes & \% Mortos \\
+\midrule
+\endhead
+Atropelamento de pedestre & Rural & 37.98556 & 52.00445 \\
+Atropelamento de pedestre & Urbano & 62.01444 & 47.99555 \\
+Colisao frontal & Rural & 70.08055 & 86.04651 \\
+Colisao frontal & Urbano & 29.91945 & 13.95349 \\
+\bottomrule
+\end{longtable}
+
+\begin{longtable}[]{@{}llrr@{}}
+\caption{Tabela 9 - Colisões frontais e atropelamentos por períoodo do
+dia nas rodovias federais (2021)}\tabularnewline
+\toprule
+Tipo de acidente & Fase do dia & \% Acidentes & \% Mortos \\
+\midrule
+\endfirsthead
+\toprule
+Tipo de acidente & Fase do dia & \% Acidentes & \% Mortos \\
+\midrule
+\endhead
+Atropelamento de pedestre & Amanhecer & 4.125129 & 6.458797 \\
+Atropelamento de pedestre & Anoitecer & 6.668958 & 3.897550 \\
+Atropelamento de pedestre & Plena noite & 55.379856 & 67.037862 \\
+Atropelamento de pedestre & Pleno dia & 33.826057 & 22.605791 \\
+Colisao frontal & Amanhecer & 5.523590 & 6.096794 \\
+Colisao frontal & Anoitecer & 6.283084 & 5.593966 \\
+Colisao frontal & Plena noite & 44.856156 & 44.123193 \\
+Colisao frontal & Pleno dia & 43.337169 & 44.186047 \\
+\bottomrule
+\end{longtable}
+
+Em relação aos atropelamentos, esses eventos ocorrem com bastante
+frequência nas rodovias federais. Em 2021 houve 2.909 acidentes com
+atropelamento, com 898 mortes e 1.258 feridos graves. Os estados de
+Paraná, Minas Gerais, São Paulo e Rio de Janeiro registraram 41\% dos
+pedestres mortos em acidentes. Além disso, ainda nesse tipo de acidente,
+destaca-se:
+
+\begin{itemize}
+\tightlist
+\item
+  31,48\% dos acidentes e 36,63\% das mortes ocorreram no fim de semana
+  (sábado e domingo), 46,8\% das ocorrências foram entre 18h e 21h
+\item
+  74\% dos acidentes e mortes ocorreram em vias retas
+\item
+  A BR-116 e a BR-101 são responsáveis por 38,53\% das ocorrências de
+  atropelamento de pessoas
+\end{itemize}
+
+\begin{longtable}[]{@{}lr@{}}
+\caption{Tabela 10 - Indicadores de quantidade para casos de
+atropelamentos de pessoas (2021)}\tabularnewline
+\toprule
+Indicador & Valor \\
+\midrule
+\endfirsthead
+\toprule
+Indicador & Valor \\
+\midrule
+\endhead
+qtd\_acidentes & 2909 \\
+qtd\_mortos & 898 \\
+qtd\_feridos\_leves & 1431 \\
+qtd\_feridos\_graves & 1258 \\
+\bottomrule
+\end{longtable}
+
+\includegraphics{report_files/figure-latex/unnamed-chunk-4-1.pdf}
+\includegraphics{report_files/figure-latex/unnamed-chunk-4-2.pdf}
+\includegraphics{report_files/figure-latex/unnamed-chunk-4-3.pdf}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 8\tabcolsep) * \real{0.32}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 8\tabcolsep) * \real{0.23}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 8\tabcolsep) * \real{0.20}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 8\tabcolsep) * \real{0.15}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 8\tabcolsep) * \real{0.11}}@{}}
+\caption{Classificação do acidente versus gravidade dos atropelamentos
+de pessoas nas rodovias federais (2021)}\tabularnewline
+\toprule
+\begin{minipage}[b]{\linewidth}\raggedright
+Classificação do acidente
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Qtde. de acidentes
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Qtde. de mortos
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+\% Acidentes
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+\% Mortos
+\end{minipage} \\
+\midrule
+\endfirsthead
+\toprule
+\begin{minipage}[b]{\linewidth}\raggedright
+Classificação do acidente
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Qtde. de acidentes
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Qtde. de mortos
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+\% Acidentes
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+\% Mortos
+\end{minipage} \\
+\midrule
+\endhead
+Com vitimas fatais & 885 & 898 & 30.422826 & 100 \\
+Com vitimas feridas & 1975 & 0 & 67.892747 & 0 \\
+Sem vitimas & 49 & 0 & 1.684428 & 0 \\
+\bottomrule
+\end{longtable}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Traçado da via versus gravidade dos atropelamentos de pessoas
+nas rodovias federais (2021)}\tabularnewline
+\toprule
+Traçado da via & Qtde. de acidentes & Qtde. de mortos & \% Acidentes &
+\% Mortos \\
+\midrule
+\endfirsthead
+\toprule
+Traçado da via & Qtde. de acidentes & Qtde. de mortos & \% Acidentes &
+\% Mortos \\
+\midrule
+\endhead
+Curva & 256 & 72 & 8.8002750 & 8.0178174 \\
+Desvio temporario & 79 & 29 & 2.7157099 & 3.2293987 \\
+Intersecao de vias & 52 & 7 & 1.7875559 & 0.7795100 \\
+Nao informado & 282 & 107 & 9.6940529 & 11.9153675 \\
+Ponte & 16 & 8 & 0.5500172 & 0.8908686 \\
+Reta & 2181 & 670 & 74.9742179 & 74.6102450 \\
+Retorno regulamentado & 12 & 2 & 0.4125129 & 0.2227171 \\
+Rotatoria & 15 & 1 & 0.5156411 & 0.1113586 \\
+Tunel & 3 & 0 & 0.1031282 & 0.0000000 \\
+Viaduto & 13 & 2 & 0.4468890 & 0.2227171 \\
+\bottomrule
+\end{longtable}
+
+\begin{longtable}[]{@{}rrrrr@{}}
+\caption{Rodovia BR do acidente versus gravidade dos atropelamentos de
+pessoas nas rodovias federais (2021)}\tabularnewline
+\toprule
+BR da rodovia & Qtde. de acidentes & Qtde. de mortos & \% Acidentes & \%
+Mortos \\
+\midrule
+\endfirsthead
+\toprule
+BR da rodovia & Qtde. de acidentes & Qtde. de mortos & \% Acidentes & \%
+Mortos \\
+\midrule
+\endhead
+101 & 603 & 151 & 20.728773 & 16.815145 \\
+116 & 518 & 178 & 17.806807 & 19.821826 \\
+40 & 184 & 43 & 6.325198 & 4.788419 \\
+381 & 135 & 38 & 4.640770 & 4.231626 \\
+277 & 95 & 29 & 3.265727 & 3.229399 \\
+376 & 83 & 25 & 2.853214 & 2.783964 \\
+364 & 73 & 16 & 2.509453 & 1.781737 \\
+163 & 66 & 16 & 2.268821 & 1.781737 \\
+262 & 60 & 14 & 2.062565 & 1.559020 \\
+316 & 55 & 25 & 1.890684 & 2.783964 \\
+230 & 53 & 22 & 1.821932 & 2.449889 \\
+153 & 51 & 24 & 1.753180 & 2.672606 \\
+232 & 51 & 18 & 1.753180 & 2.004454 \\
+476 & 50 & 9 & 1.718804 & 1.002227 \\
+222 & 46 & 17 & 1.581299 & 1.893096 \\
+\bottomrule
+\end{longtable}
+
+\hypertarget{anuxe1lise-da-evoluuxe7uxe3o-de-indicadores-na-uxfaltima-duxe9cada-2010-2021}{%
+\subsection{Análise da evolução de indicadores na última década
+(2010-2021)}\label{anuxe1lise-da-evoluuxe7uxe3o-de-indicadores-na-uxfaltima-duxe9cada-2010-2021}}
+
+\begin{table}
+
+\caption{\label{tab:unnamed-chunk-6}Estatísticas dos acidentes de trânsito nas rodovias federais (2010 - 2021)}
+\centering
+\fontsize{7}{9}\selectfont
+\begin{tabular}[t]{l|r|r|r|r|r|r|r|r|r|r|r}
+\hline
+Item & 2010 & 2011 & 2012 & 2013 & 2014 & 2015 & 2016 & 2017 & 2018 & 2019 & 2020\\
+\hline
+Total de acidentes & 183469.0 & 192326.0 & 184565.0 & 186748.0 & 169201.0 & 122161.0 & 96363.0 & 89396.0 & 69206.0 & 67446.0 & 63548.0\\
+\hline
+Número de veículos envolvidos & 321445.0 & 339334.0 & 328158.0 & 333039.0 & 301417.0 & 208887.0 & 158111.0 & 144947.3 & 114475.0 & 112051.0 & 103847.0\\
+\hline
+Número de mortes & 8623.0 & 8675.0 & 8663.0 & 8426.0 & 8234.0 & 6867.0 & 6398.0 & 6243.0 & 5269.0 & 5333.0 & 5291.0\\
+\hline
+Mortes/1.000 acidentes & 47.0 & 45.1 & 46.9 & 45.1 & 48.7 & 56.2 & 66.4 & 69.8 & 76.1 & 79.1 & 83.3\\
+\hline
+Número de acidentes/morte & 21.3 & 22.2 & 21.3 & 22.2 & 20.5 & 17.8 & 15.1 & 14.3 & 13.1 & 12.6 & 12.0\\
+\hline
+Número de feridos & 103219.0 & 106827.0 & 104466.0 & 103810.0 & 100832.0 & 90251.0 & 86672.0 & 84076.9 & 76525.0 & 79073.0 & 71480.0\\
+\hline
+Feridos/1.000 acidentes & 562.6 & 555.4 & 566.0 & 555.9 & 595.9 & 738.8 & 899.4 & 940.5 & 1105.8 & 1172.4 & 1124.8\\
+\hline
+Número de acidentes/ferido & 1.8 & 1.8 & 1.8 & 1.8 & 1.7 & 1.4 & 1.1 & 1.1 & 0.9 & 0.9 & 0.9\\
+\hline
+Número de ilesos & 268283.0 & 280170.0 & 267954.0 & 276250.0 & 243276.0 & 159317.0 & 112305.0 & 103205.2 & 73813.0 & 68634.0 & 60858.0\\
+\hline
+Ilesos/1.000 acidentes & 1462.3 & 1456.7 & 1451.8 & 1479.3 & 1437.8 & 1304.2 & 1165.4 & 1154.5 & 1066.6 & 1017.6 & 957.7\\
+\hline
+Número de acidentes/ileso & 0.7 & 0.7 & 0.7 & 0.7 & 0.7 & 0.8 & 0.9 & 0.9 & 0.9 & 1.0 & 1.0\\
+\hline
+\end{tabular}
+\end{table}
+
+\includegraphics{report_files/figure-latex/unnamed-chunk-6-1.pdf}
+
+\hypertarget{section}{%
+\subsection{}\label{section}}
+
+\end{document}
